@@ -21,7 +21,13 @@ def run(cmd):
 
 
 def esc(text: str) -> str:
-    return text.replace("%", " percent").replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
+    return (
+        text.replace("%", " percent")
+        .replace("\\", "\\\\")
+        .replace(":", "\\:")
+        .replace(",", "\\,")
+        .replace("'", "\\'")
+    )
 
 
 def build_clip(scene, idx):
