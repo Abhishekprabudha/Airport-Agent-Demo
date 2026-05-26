@@ -1,5 +1,4 @@
 import json
-import os
 import shlex
 import shutil
 import subprocess
@@ -68,7 +67,15 @@ def build_clip(scene, idx):
 
 def main():
     if shutil.which("ffmpeg") is None:
-        raise SystemExit("ffmpeg not found. Install ffmpeg first.")
+        raise SystemExit(
+            "ffmpeg not found. Install ffmpeg first (e.g. `sudo apt-get install -y ffmpeg`)."
+        )
+    missing_videos = sorted({scene["video"] for scene in SCENES if not (VIDEOS / scene["video"]).exists()})
+    if missing_videos:
+        raise SystemExit(
+            "Missing required source video files in assets/videos: "
+            + ", ".join(missing_videos)
+        )
     OUT_DIR.mkdir(exist_ok=True)
     if TMP.exists(): shutil.rmtree(TMP)
     TMP.mkdir()
