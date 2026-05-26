@@ -7,11 +7,32 @@ TEXT_PATH = ROOT / "assets" / "audio" / "narration.txt"
 OUT_PATH = ROOT / "assets" / "audio" / "airport-agent-narration.mp3"
 VOICE = "en-US-GuyNeural"
 RATE = "-2%"
+MAX_RETRIES = 4
+
+
+async def save_with_retries(text: str):
+    last_exc = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            communicate = edge_tts.Communicate(text, VOICE, rate=RATE)
+            await communicate.save(str(OUT_PATH))
+            return
+        except Exception as exc:
+            last_exc = exc
+            if attempt == MAX_RETRIES:
+                break
+            wait_s = 2 ** (attempt - 1)
+            print(f"Narration attempt {attempt}/{MAX_RETRIES} failed: {exc}. Retrying in {wait_s}s...")
+            await asyncio.sleep(wait_s)
+    raise RuntimeError(
+        "Unable to generate narration via Edge TTS after multiple retries. "
+        "Check DNS/network access to speech.platform.bing.com:443."
+    ) from last_exc
+
 
 async def main():
     text = TEXT_PATH.read_text(encoding="utf-8")
-    communicate = edge_tts.Communicate(text, VOICE, rate=RATE)
-    await communicate.save(str(OUT_PATH))
+    await save_with_retries(text)
     print(f"Narration written to {OUT_PATH}")
 
 if __name__ == "__main__":
